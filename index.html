@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Parking Calculator</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Khmer OS Battambang", sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #edf2f8;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 680px;
+    background: white;
+    padding: 35px;
+    border-radius: 18px;
+    box-shadow: 0 10px 35px rgba(20,40,70,0.12);
+}
+
+h2 {
+    text-align: center;
+    color: #18365c;
+    font-size: 25px;
+    margin-bottom: 40px;
+}
+
+.form-group {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 17px;
+}
+
+label {
+    font-size: 18px;
+    color: #263d59;
+}
+
+input, select {
+    width: 100%;
+    height: 60px;
+    border: 2px solid #dce5ef;
+    border-radius: 12px;
+    padding: 0 15px;
+    font-size: 17px;
+    color: #18365c;
+    background: #f8fafd;
+    outline: none;
+    transition: .3s;
+}
+
+input:focus, select:focus {
+    border-color: #16a6bc;
+    box-shadow: 0 0 0 3px rgba(22,166,188,.12);
+}
+
+input[readonly] {
+    background: #edf4fa;
+    font-weight: bold;
+}
+
+button {
+    width: calc(100% - 235px);
+    margin-left: 235px;
+    height: 60px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #176bc0, #13b5c4);
+    color: white;
+    font-size: 21px;
+    cursor: pointer;
+    transition: .3s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgba(19,181,196,.25);
+}
+
+#error {
+    color: #dc2626;
+    text-align: center;
+    margin-top: 15px;
+    font-size: 15px;
+}
+
+@media(max-width: 600px) {
+    .container {
+        padding: 25px 18px;
+    }
+
+    .form-group {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    button {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    h2 {
+        font-size: 21px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>គណនាថ្លៃចតយានយន្ត</h2>
+
+    <!-- Vehicle -->
+    <div class="form-group">
+        <label>ជ្រើសរើសយានយន្ត:</label>
+
+        <select id="vehicle">
+            <option value="car">ឡាន 🚗</option>
+            <option value="motorcycle">ម៉ូតូ 🏍️</option>
+        </select>
+    </div>
+
+    <!-- Start Time -->
+    <div class="form-group">
+        <label>ម៉ោងចូល</label>
+        <input type="datetime-local" id="startTime">
+    </div>
+
+    <!-- End Time -->
+    <div class="form-group">
+        <label>ម៉ោងចេញ</label>
+        <input type="datetime-local" id="endTime">
+    </div>
+
+    <!-- Duration -->
+    <div class="form-group">
+        <label>រយៈពេលចត</label>
+        <input type="text" id="duration"
+               placeholder="ម៉ោង" readonly>
+    </div>
+
+    <!-- Riel -->
+    <div class="form-group">
+        <label>ថ្លៃឈ្នួល រៀល</label>
+        <input type="text" id="riel"
+               placeholder="៛" readonly>
+    </div>
+
+    <!-- Dollar -->
+    <div class="form-group">
+        <label>ថ្លៃឈ្នួល ដុល្លារ</label>
+        <input type="text" id="dollar"
+               placeholder="$" readonly>
+    </div>
+
+    <!-- Calculate -->
+    <button onclick="calculate()">គណនា</button>
+
+    <div id="error"></div>
+
+</div>
+
+
+<script>
+
+// អត្រាប្តូរប្រាក់
+const EXCHANGE_RATE = 4100;
+
+function calculate() {
+
+    const vehicle = document.getElementById("vehicle").value;
+
+    const start = document.getElementById("startTime").value;
+    const end = document.getElementById("endTime").value;
+
+    const error = document.getElementById("error");
+
+    error.innerText = "";
+
+    // ពិនិត្យទិន្នន័យ
+    if (!start || !end) {
+        error.innerText = "សូមបញ្ចូលម៉ោងចូល និងម៉ោងចេញ!";
+        return;
+    }
+
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    const difference = endDate - startDate;
+
+    if (difference <= 0) {
+        error.innerText = "ម៉ោងចេញត្រូវតែធំជាងម៉ោងចូល!";
+        return;
+    }
+
+    // គណនាម៉ោង
+    const hours = difference / (1000 * 60 * 60);
+
+    // បង្គត់ម៉ោងឡើង
+    const totalHours = Math.ceil(hours);
+
+    // កំណត់តម្លៃតាមប្រភេទយានយន្ត
+    let rate;
+
+    if (vehicle === "car") {
+
+        rate = totalHours <= 8 ? 500 : 1000;
+
+    } else {
+
+        rate = totalHours <= 8 ? 200 : 300;
+
+    }
+
+    // គណនាតម្លៃសរុប
+    const totalPrice = totalHours * rate;
+
+    // បម្លែងទៅជាដុល្លារ
+    const totalDollar = totalPrice / EXCHANGE_RATE;
+
+    // បង្ហាញលទ្ធផល
+    document.getElementById("duration").value =
+        totalHours + " ម៉ោង";
+
+    document.getElementById("riel").value =
+        totalPrice.toLocaleString("en-US") + " ៛";
+
+    document.getElementById("dollar").value =
+        "$ " + totalDollar.toFixed(2);
+
+}
+
+</script>
+
+</body>
+</html>
